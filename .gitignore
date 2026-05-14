@@ -1,0 +1,24 @@
+# Build output
+target/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.project
+.classpath
+.settings/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# test-order (keep download-config.yml, ignore everything else)
+.test-order/deps/
+.test-order/test-dependencies.lz4
+.test-order/hashes.lz4
+.test-order/method-hashes.lz4
+.test-order/state.properties
+.test-order/hashes/
+.test-order/test-hashes.lz4
+.test-order/ml-history/

@@ -1,0 +1,7 @@
+ci:
+  github:
+    owner: parttimenerd
+    repo: sample-ci-test-order
+    workflow: ci.yml
+    artifact-name: test-order-deps
+    branch: main

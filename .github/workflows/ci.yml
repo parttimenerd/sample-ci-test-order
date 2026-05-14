@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test-and-learn:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Restore test-order index
+        uses: actions/cache@v4
+        with:
+          path: .test-order/
+          key: test-order-${{ github.sha }}
+          restore-keys: test-order-
+
+      # ── Learn mode on main (builds the full dependency index) ──
+      - name: "Learn: full instrumented run"
+        if: github.ref == 'refs/heads/main'
+        run: mvn -B -ntp test -Dtestorder.mode=learn
+
+      # ── Three-tiered run on PRs (fail-fast with prioritized tests) ──
+      - name: "Tier 1: change-affected tests"
+        if: github.ref != 'refs/heads/main'
+        run: |
+          mvn -B -ntp test-order:tiered-select test \
+            -Dtestorder.changeMode=since-last-commit \
+            -Dtestorder.tiered.tier2Fraction=0.5
+
+      - name: "Tier 2: top-scored remaining"
+        if: github.ref != 'refs/heads/main' && success()
+        run: |
+          mvn -B -ntp test-order:run-tier test \
+            -Dtestorder.tiered.currentTier=2
+
+      - name: "Tier 3: full coverage"
+        if: github.ref != 'refs/heads/main' && success()
+        run: |
+          mvn -B -ntp test-order:run-tier test \
+            -Dtestorder.tiered.currentTier=3
+
+      - name: Show test order and stats
+        if: always()
+        run: |
+          echo '## Test Order' >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          mvn -B -ntp -q test-order:show -Dtestorder.changeMode=since-last-commit 2>&1 \
+            | tee -a "$GITHUB_STEP_SUMMARY" || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload dependency index
+        if: github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-order-deps
+          path: .test-order/test-dependencies.lz4
+          retention-days: 90
+          if-no-files-found: warn

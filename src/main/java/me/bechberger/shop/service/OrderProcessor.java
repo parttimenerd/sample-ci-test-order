@@ -79,8 +79,10 @@ public class OrderProcessor {
      */
     public void cancelOrder(Order order) {
         order.cancel();
-        // BUG: forgot to release inventory!
-        // inventoryManager.release(...) should be called for each item
+        // Release reserved inventory for each item
+        for (OrderItem item : order.getItems()) {
+            inventoryManager.release(item.getProduct().getId(), item.getQuantity());
+        }
     }
 
     /**

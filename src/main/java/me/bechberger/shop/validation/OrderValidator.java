@@ -12,8 +12,8 @@ import me.bechberger.shop.service.InventoryManager;
  */
 public class OrderValidator {
 
-    private static final int MAX_ITEMS = 50;
-    private static final int MAX_QUANTITY_PER_ITEM = 100;
+    private static final int MAX_ITEMS = 25;
+    private static final int MAX_QUANTITY_PER_ITEM = 50;
 
     private final AddressValidator addressValidator;
     private final EmailValidator emailValidator;

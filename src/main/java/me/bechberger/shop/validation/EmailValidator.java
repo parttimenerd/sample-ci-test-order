@@ -38,4 +38,14 @@ public class EmailValidator {
         return domain.equals("gmail.com") || domain.equals("yahoo.com") ||
                domain.equals("hotmail.com") || domain.equals("outlook.com");
     }
+
+    /**
+     * Check if the email uses a known disposable/temporary provider.
+     */
+    public boolean isDisposableProvider(String email) {
+        String domain = extractDomain(email);
+        if (domain == null) return false;
+        return domain.equals("tempmail.com") || domain.equals("throwaway.email") ||
+               domain.equals("guerrillamail.com") || domain.equals("mailinator.com");
+    }
 }

@@ -39,4 +39,16 @@ class EmailValidatorTest {
         assertTrue(validator.isFreeProvider("user@yahoo.com"));
         assertFalse(validator.isFreeProvider("user@company.com"));
     }
+
+    @Test
+    void disposableProviderDetected() {
+        assertTrue(validator.isDisposableProvider("x@tempmail.com"));
+        assertTrue(validator.isDisposableProvider("x@mailinator.com"));
+    }
+
+    @Test
+    void normalEmailNotDisposable() {
+        assertFalse(validator.isDisposableProvider("user@company.com"));
+        assertFalse(validator.isDisposableProvider("user@gmail.com"));
+    }
 }

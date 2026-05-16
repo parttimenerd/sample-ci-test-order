@@ -46,4 +46,22 @@ class AddressValidatorTest {
         assertTrue(validator.isSupportedCountry("GB"));
         assertFalse(validator.isSupportedCountry("ZZ"));
     }
+
+    @Test
+    void validAustralianAddress() {
+        Address addr = new Address("42 Wallaby Way", "Sydney", "NSW", "2000", "AU");
+        assertNull(validator.validate(addr));
+    }
+
+    @Test
+    void invalidAustralianZip() {
+        Address addr = new Address("42 Wallaby Way", "Sydney", "NSW", "123", "AU");
+        assertNotNull(validator.validate(addr));
+    }
+
+    @Test
+    void validJapaneseAddress() {
+        Address addr = new Address("1-1 Marunouchi", "Tokyo", "TK", "100-0005", "JP");
+        assertNull(validator.validate(addr));
+    }
 }

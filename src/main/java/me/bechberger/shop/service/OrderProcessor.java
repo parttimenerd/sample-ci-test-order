@@ -75,6 +75,17 @@ public class OrderProcessor {
     }
 
     /**
+     * Cancel a confirmed order.
+     */
+    public void cancelOrder(Order order) {
+        order.cancel();
+        // Release reserved inventory for each item
+        for (OrderItem item : order.getItems()) {
+            inventoryManager.release(item.getProduct().getId(), item.getQuantity());
+        }
+    }
+
+    /**
      * Result of order processing.
      */
     public static class ProcessingResult {

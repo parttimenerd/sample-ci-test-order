@@ -1,6 +1,7 @@
 package me.bechberger.shop.validation;
 
 import me.bechberger.shop.model.Address;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -9,8 +10,14 @@ import java.util.regex.Pattern;
  */
 public class AddressValidator {
 
-    private static final Pattern US_ZIP = Pattern.compile("^\\d{5}(-\\d{4})?$");
-    private static final Pattern CA_ZIP = Pattern.compile("^[A-Za-z]\\d[A-Za-z] ?\\d[A-Za-z]\\d$");
+    private static final Map<String, Pattern> ZIP_PATTERNS = Map.of(
+            "US", Pattern.compile("^\\d{5}(-\\d{4})?$"),
+            "CA", Pattern.compile("^[A-Za-z]\\d[A-Za-z] ?\\d[A-Za-z]\\d$"),
+            "AU", Pattern.compile("^\\d{4}$"),
+            "JP", Pattern.compile("^\\d{3}-?\\d{4}$"),
+            "DE", Pattern.compile("^\\d{5}$"),
+            "GB", Pattern.compile("^[A-Za-z]{1,2}\\d[A-Za-z\\d]? ?\\d[A-Za-z]{2}$")
+    );
 
     private static final Set<String> SUPPORTED_COUNTRIES = Set.of(
             "US", "CA", "MX", "GB", "DE", "FR", "JP", "AU"
@@ -52,11 +59,10 @@ public class AddressValidator {
     }
 
     private String validateZip(String zip, String country) {
-        return switch (country) {
-            case "US" -> US_ZIP.matcher(zip).matches() ? null : "Invalid US ZIP code: " + zip;
-            case "CA" -> CA_ZIP.matcher(zip).matches() ? null : "Invalid Canadian postal code: " + zip;
-            default -> null; // no specific validation for other countries
-        };
+        Pattern pattern = ZIP_PATTERNS.get(country);
+        if (pattern == null) return null; // no validation for this country
+        return pattern.matcher(zip).matches() ? null :
+                "Invalid postal code for " + country + ": " + zip;
     }
 
     private boolean isBlank(String s) {

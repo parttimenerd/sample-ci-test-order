@@ -84,4 +84,28 @@ class OrderValidatorTest {
         assertFalse(result.isValid());
         assertTrue(result.getErrors().size() >= 2);
     }
+
+    @Test
+    void newStricterQuantityLimit() {
+        Address addr = new Address("123 Main", "City", "ST", "62701", "US");
+        Customer customer = new Customer("C1", "Alice", "a@x.com", addr);
+        Order order = new Order("O1", customer);
+        Product p = new Product("P1", "Widget", Money.usd(10.00), "General", 1.0);
+        order.addItem(new OrderItem(p, 51)); // exceeds new limit of 50
+        inventory.setStock("P1", 200);
+        var result = validator.validate(order);
+        assertFalse(result.isValid());
+    }
+
+    @Test
+    void quantityWithinNewLimit() {
+        Address addr = new Address("123 Main", "City", "ST", "62701", "US");
+        Customer customer = new Customer("C1", "Alice", "a@x.com", addr);
+        Order order = new Order("O1", customer);
+        Product p = new Product("P1", "Widget", Money.usd(10.00), "General", 1.0);
+        order.addItem(new OrderItem(p, 50)); // exactly at new limit
+        inventory.setStock("P1", 200);
+        var result = validator.validate(order);
+        assertTrue(result.isValid());
+    }
 }

@@ -11,6 +11,7 @@ public class PricingEngine {
     private static final double TAX_RATE = 0.08; // 8% sales tax
     private static final double BULK_DISCOUNT_THRESHOLD = 10;
     private static final double BULK_DISCOUNT_PERCENT = 5.0;
+    private static final double LOYALTY_DISCOUNT_PERCENT = 10.0;
 
     private final MoneyFormatter formatter;
 
@@ -70,5 +71,15 @@ public class PricingEngine {
      */
     public String formatPrice(Money money) {
         return formatter.format(money);
+    }
+
+    /**
+     * Calculate loyalty discount: 10% off for loyal customers (5+ orders).
+     */
+    public Money calculateLoyaltyDiscount(Customer customer, Money subtotal) {
+        if (customer.isLoyal()) {
+            return subtotal.percentage(LOYALTY_DISCOUNT_PERCENT);
+        }
+        return Money.ZERO;
     }
 }

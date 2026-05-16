@@ -73,4 +73,23 @@ class PricingEngineTest {
         Money total = engine.priceOrder(order);
         assertEquals(Money.usd(54.00), total); // 50 + 4
     }
+
+    @Test
+    void loyaltyDiscountForLoyalCustomer() {
+        Address addr = new Address("123 Main", "City", "ST", "12345", "US");
+        Customer customer = new Customer("C1", "Alice", "a@x.com", addr);
+        for (int i = 0; i < 5; i++) customer.incrementOrderCount();
+        assertTrue(customer.isLoyal());
+        Money discount = engine.calculateLoyaltyDiscount(customer, Money.usd(100.00));
+        assertEquals(Money.usd(10.00), discount); // 10% of 100
+    }
+
+    @Test
+    void noLoyaltyDiscountForNewCustomer() {
+        Address addr = new Address("123 Main", "City", "ST", "12345", "US");
+        Customer customer = new Customer("C2", "Bob", "b@x.com", addr);
+        assertFalse(customer.isLoyal());
+        Money discount = engine.calculateLoyaltyDiscount(customer, Money.usd(100.00));
+        assertTrue(discount.isZero());
+    }
 }

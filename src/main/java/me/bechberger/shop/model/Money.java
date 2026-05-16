@@ -50,7 +50,7 @@ public final class Money implements Comparable<Money> {
     }
 
     public Money percentage(double percent) {
-        return multiply(percent / 100.0);
+        return multiply(percent);
     }
 
     public boolean isNegative() {

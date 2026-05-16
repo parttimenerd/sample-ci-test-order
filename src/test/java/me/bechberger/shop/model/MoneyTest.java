@@ -35,7 +35,7 @@ class MoneyTest {
     @Test
     void percentage() {
         Money base = Money.usd(200.00);
-        assertEquals(Money.usd(16.00), base.percentage(0.08));
+        assertEquals(Money.usd(16.00), base.percentage(8.0));
     }
 
     @Test

@@ -67,4 +67,22 @@ class ShippingCalculatorTest {
         Money cost = calc.calculateShipping(order, dest);
         assertTrue(cost.isZero());
     }
+
+    @Test
+    void expressShippingDomestic() {
+        Order order = createOrder(10.00, 1, 2.0);
+        Address dest = new Address("456 Oak", "Town", "CA", "90210", "US");
+        Money cost = calc.calculateExpress(order, dest);
+        // 2x standard: 2 * ($0.50 * 2.0 + $3.99) = 2 * $4.99 = $9.98
+        assertEquals(Money.usd(9.98), cost);
+    }
+
+    @Test
+    void expressShippingInternational() {
+        Order order = createOrder(10.00, 1, 3.0);
+        Address dest = new Address("221B Baker", "London", "ENG", "NW1", "GB");
+        Money cost = calc.calculateExpress(order, dest);
+        // 2x standard: 2 * ($2.50 * 3.0 + $3.99) = 2 * $11.49 = $22.98
+        assertEquals(Money.usd(22.98), cost);
+    }
 }

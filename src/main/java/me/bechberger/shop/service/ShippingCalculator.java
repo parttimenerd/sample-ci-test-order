@@ -17,6 +17,9 @@ public class ShippingCalculator {
     // Flat handling fee
     private static final double HANDLING_FEE = 3.99;
 
+    // Express multiplier
+    private static final double EXPRESS_MULTIPLIER = 2.0;
+
     /**
      * Calculate standard shipping cost.
      */
@@ -43,6 +46,14 @@ public class ShippingCalculator {
             return Money.ZERO;
         }
         return calculateStandard(order, destination);
+    }
+
+    /**
+     * Calculate express shipping cost (2x standard rate).
+     */
+    public Money calculateExpress(Order order, Address destination) {
+        Money standard = calculateStandard(order, destination);
+        return standard.multiply(EXPRESS_MULTIPLIER);
     }
 
     private double getRateForZone(int zone) {

@@ -77,6 +77,17 @@ public class Order {
     public void setTotal(Money total) { this.total = total; }
 
     /**
+     * Cancel this order. Only confirmed or shipped orders can be cancelled.
+     */
+    public void cancel() {
+        if (status != Status.CONFIRMED && status != Status.SHIPPED) {
+            throw new IllegalStateException("Cannot cancel an order in status: " + status);
+        }
+        this.status = Status.CANCELLED;
+        this.updatedAt = Instant.now();
+    }
+
+    /**
      * Total weight of all items in the order.
      */
     public double getTotalWeight() {

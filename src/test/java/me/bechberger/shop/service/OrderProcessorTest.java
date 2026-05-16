@@ -106,4 +106,28 @@ class OrderProcessorTest {
         processor.processOrder(order);
         assertEquals(1, customer.getTotalOrders());
     }
+
+    @Test
+    void cancelOrderSetsStatusToCancelled() {
+        Order order = createValidOrder();
+        processor.processOrder(order);
+        assertEquals(Order.Status.CONFIRMED, order.getStatus());
+
+        processor.cancelOrder(order);
+        assertEquals(Order.Status.CANCELLED, order.getStatus());
+    }
+
+    @Test
+    void cancelOrderRestoresInventory() {
+        Order order = createValidOrder();
+        int stockBefore = inventory.getAvailable("P1");
+        processor.processOrder(order);
+        int stockAfterOrder = inventory.getAvailable("P1");
+        assertTrue(stockAfterOrder < stockBefore, "Stock should decrease after order");
+
+        processor.cancelOrder(order);
+        int stockAfterCancel = inventory.getAvailable("P1");
+        assertEquals(stockBefore, stockAfterCancel,
+                "Cancelling should restore inventory to original level");
+    }
 }

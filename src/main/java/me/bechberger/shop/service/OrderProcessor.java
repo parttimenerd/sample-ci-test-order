@@ -75,6 +75,15 @@ public class OrderProcessor {
     }
 
     /**
+     * Cancel a confirmed order.
+     */
+    public void cancelOrder(Order order) {
+        order.cancel();
+        // BUG: forgot to release inventory!
+        // inventoryManager.release(...) should be called for each item
+    }
+
+    /**
      * Result of order processing.
      */
     public static class ProcessingResult {

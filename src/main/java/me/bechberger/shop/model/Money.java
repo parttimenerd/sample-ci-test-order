@@ -46,9 +46,7 @@ public final class Money implements Comparable<Money> {
     }
 
     public Money multiply(double factor) {
-        // Round to 1dp to avoid BigDecimal scale accumulation
-        return new Money(this.amount.multiply(BigDecimal.valueOf(factor))
-                .setScale(1, RoundingMode.FLOOR), this.currency);
+        return new Money(this.amount.multiply(BigDecimal.valueOf(factor)), this.currency);
     }
 
     public Money percentage(double percent) {

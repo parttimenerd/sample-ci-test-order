@@ -30,7 +30,9 @@ jobs:
         with:
           path: .test-order/
           key: test-order-${{ github.ref }}-${{ github.sha }}
-          restore-keys: test-order-${{ github.ref }}-
+          restore-keys: |
+            test-order-refs/heads/main-
+            test-order-
 
       # ── Learn mode on main (builds the full dependency index) ──
       - name: "Learn: full instrumented run"

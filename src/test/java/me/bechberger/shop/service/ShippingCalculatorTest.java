@@ -78,11 +78,20 @@ class ShippingCalculatorTest {
     }
 
     @Test
-    void expressShippingInternational() {
+    void overnightShippingDomestic() {
+        Order order = createOrder(10.00, 1, 2.0);
+        Address dest = new Address("456 Oak", "Town", "CA", "90210", "US");
+        Money cost = calc.calculateOvernight(order, dest);
+        // 3x standard: 3 * ($0.50 * 2.0 + $3.99) = 3 * $4.99 = $14.97
+        assertEquals(Money.usd(14.97), cost);
+    }
+
+    @Test
+    void overnightShippingInternational() {
         Order order = createOrder(10.00, 1, 3.0);
         Address dest = new Address("221B Baker", "London", "ENG", "NW1", "GB");
-        Money cost = calc.calculateExpress(order, dest);
-        // 2x standard: 2 * ($2.50 * 3.0 + $3.99) = 2 * $11.49 = $22.98
-        assertEquals(Money.usd(22.98), cost);
+        Money cost = calc.calculateOvernight(order, dest);
+        // 3x standard: 3 * ($2.50 * 3.0 + $3.99) = 3 * $11.49 = $34.47
+        assertEquals(Money.usd(34.47), cost);
     }
 }

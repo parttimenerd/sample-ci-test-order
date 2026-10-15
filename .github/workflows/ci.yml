@@ -32,12 +32,20 @@ jobs:
           key: test-order-${{ github.ref }}-${{ github.sha }}
           restore-keys: test-order-${{ github.ref }}-
 
+      # ── Learn mode on main (builds the full dependency index) ──
+      - name: "Learn: full instrumented run"
+        if: github.ref == 'refs/heads/main'
+        run: mvn -B -ntp test -Dtestorder.mode=learn
+
+      # ── Affected-first on PRs ──
       - name: Run affected tests
+        if: github.ref != 'refs/heads/main'
         run: |
           mvn -B -ntp test-order:affected test \
             -Dtestorder.changeMode=since-last-commit
 
       - name: Run remaining tests (if affected passed)
+        if: github.ref != 'refs/heads/main'
         run: mvn -B -ntp test-order:run-remaining test
 
       - name: Save test-order index

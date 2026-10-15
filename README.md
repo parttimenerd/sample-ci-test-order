@@ -3,70 +3,51 @@
 [![CI](https://github.com/parttimenerd/sample-ci-test-order/actions/workflows/ci.yml/badge.svg)](https://github.com/parttimenerd/sample-ci-test-order/actions)
 
 A mini e-commerce order system demonstrating [test-order](https://github.com/parttimenerd/test-order)'s
-three-tiered CI workflow.
+intelligent CI workflow — affected tests run first, then the rest only if they passed.
 
 ## What is this?
 
-This repo shows how `test-order` intelligently prioritizes tests in CI:
+This repo shows how `test-order` prioritizes tests in CI:
 
-- **On main**: every push runs all tests in **learn mode**, building a dependency index
-- **On PRs**: tests run in **three tiers** — change-affected first, then top-scored, then the rest
+- **Affected tests first**: change-impacted tests run immediately via dependency analysis
+- **Remaining tests after**: the rest of the suite runs only if affected tests passed
+- **Fail fast**: a bug in changed code stops CI before running unrelated tests
 - **Locally**: developers download the CI-built index with `mvn test-order:download`
 
-When a PR introduces a bug, **tier 1 catches it in seconds** instead of running the full suite.
-
-## Demo Results
-
-| PR | Description | Tier 1 | Tier 2 | Tier 3 | Time |
-|----|-------------|--------|--------|--------|------|
-| [#1](https://github.com/parttimenerd/sample-ci-test-order/pull/1) | Express shipping | ✓ | ✓ | ✓ | 37s |
-| [#2](https://github.com/parttimenerd/sample-ci-test-order/pull/2) (buggy) | Money.percentage API change | ✗ **caught!** | skipped | skipped | 18s |
-| [#2](https://github.com/parttimenerd/sample-ci-test-order/pull/2) (fixed) | Restore percentage division | ✓ | ✓ | ✓ | 28s |
-| [#3](https://github.com/parttimenerd/sample-ci-test-order/pull/3) | Validation overhaul (3 files) | ✓ | ✓ | ✓ | 22s |
-| [#4](https://github.com/parttimenerd/sample-ci-test-order/pull/4) (buggy) | Order cancellation (no inv. release) | ✗ **caught!** | skipped | skipped | ~20s |
-| [#4](https://github.com/parttimenerd/sample-ci-test-order/pull/4) (fixed) | Release inventory on cancel | ✓ | ✓ | ✓ | 28s |
-
-**Key takeaway:** both bugs were caught in **tier 1** within seconds. Tiers 2 and 3 were skipped entirely — no wasted CI time on unrelated tests.
-
-## How the Three-Tiered Workflow Works
-
-```
-PR opened
-  │
-  ▼
-Tier 1: run change-affected tests (via dependency analysis)
-  │ FAIL? → stop immediately, report failure
-  ▼
-Tier 2: run top-scored remaining tests (by execution duration budget)
-  │ FAIL? → stop
-  ▼
-Tier 3: run everything else
-  │
-  ▼
-All green ✓
-```
-
-`test-order` uses instrumented learn runs on `main` to build a **dependency index** —
-which test classes load which production classes. When a PR changes `Money.java`,
-tier 1 automatically includes `MoneyTest`, `PricingEngineTest`, `ShippingCalculatorTest`,
-`OrderProcessorTest`, and any other test that transitively depends on `Money`.
+When a PR introduces a bug, **affected tests catch it in seconds** instead of running the full suite first.
 
 ## Quick Start
 
 ```bash
-# Clone and build
 git clone https://github.com/parttimenerd/sample-ci-test-order.git
 cd sample-ci-test-order
 
 # Download the CI-built dependency index
 mvn test-order:download
 
-# Run tests — they'll be ordered by relevance to your changes
+# Run tests — affected tests run first
 mvn test
 
 # See the current test ranking
 mvn test-order:show
 ```
+
+## CI Workflow
+
+Two steps on every PR:
+
+```yaml
+- name: Run affected tests
+  run: |
+    mvn test-order:affected test \
+      -Dtestorder.changeMode=since-last-commit
+
+- name: Run remaining tests (if affected passed)
+  run: mvn test-order:run-remaining test
+```
+
+The index is built on main pushes and cached — PRs restore it automatically.
+See [`.github/workflows/ci.yml`](.github/workflows/ci.yml) for the full workflow.
 
 ## Architecture
 
@@ -81,9 +62,16 @@ me.bechberger.shop
 
 17 source classes, 17 test classes, 118 test methods.
 
-## CI Workflow
+## How test-order selects affected tests
 
-See [`.github/workflows/ci.yml`](.github/workflows/ci.yml) for the full workflow.
+`test-order` records which test classes loaded which production classes during a learn run on main.
+When a PR changes `Money.java`, the affected step automatically runs `MoneyTest`,
+`PricingEngineTest`, `ShippingCalculatorTest`, `OrderProcessorTest`, and any other
+test that transitively depends on `Money` — without any configuration.
 
-The CI summary tab on each PR run shows the test-order tier breakdown —
-check the [Actions tab](https://github.com/parttimenerd/sample-ci-test-order/actions) to see it in action.
+```
+Change Money.java
+  → Affected: MoneyTest, PricingEngineTest, ShippingCalculatorTest,
+              OrderProcessorTest, MoneyFormatterTest, NotificationServiceTest, OrderItemTest
+  → Remaining: AddressTest, CustomerTest, ProductCatalogTest, ...
+```

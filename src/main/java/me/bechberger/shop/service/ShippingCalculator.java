@@ -20,6 +20,9 @@ public class ShippingCalculator {
     // Express multiplier
     private static final double EXPRESS_MULTIPLIER = 2.0;
 
+    // Overnight multiplier
+    private static final double OVERNIGHT_MULTIPLIER = 3.0;
+
     /**
      * Calculate standard shipping cost.
      */
@@ -54,6 +57,14 @@ public class ShippingCalculator {
     public Money calculateExpress(Order order, Address destination) {
         Money standard = calculateStandard(order, destination);
         return standard.multiply(EXPRESS_MULTIPLIER);
+    }
+
+    /**
+     * Calculate overnight shipping cost (3x standard rate).
+     */
+    public Money calculateOvernight(Order order, Address destination) {
+        Money standard = calculateStandard(order, destination);
+        return standard.multiply(OVERNIGHT_MULTIPLIER);
     }
 
     private double getRateForZone(int zone) {

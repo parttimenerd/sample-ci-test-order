@@ -12,42 +12,44 @@ This repo shows how `test-order` prioritizes tests in CI:
 - **Affected tests first**: change-impacted tests run immediately via dependency analysis
 - **Remaining tests after**: the rest of the suite runs only if affected tests passed
 - **Fail fast**: a bug in changed code stops CI before running unrelated tests
-- **Locally**: developers download the CI-built index with `mvn test-order:download`
 
-When a PR introduces a bug, **affected tests catch it in seconds** instead of running the full suite first.
+When a PR introduces a bug, **affected tests catch it in seconds** instead of running the full suite.
 
-## Quick Start
+## Demo Results
 
-```bash
-git clone https://github.com/parttimenerd/sample-ci-test-order.git
-cd sample-ci-test-order
+| PR | Description | Affected | Remaining | Result |
+|----|-------------|----------|-----------|--------|
+| [#5](https://github.com/parttimenerd/sample-ci-test-order/pull/5) | Add overnight shipping | 2 tests | 15 tests | ✓ all green |
+| [#6](https://github.com/parttimenerd/sample-ci-test-order/pull/6) (buggy) | Money precision "optimization" | 11 tests — **caught!** | skipped | ✗ fail |
+| [#6](https://github.com/parttimenerd/sample-ci-test-order/pull/6) (fixed) | Restore 2dp precision | 11 tests | 6 tests | ✓ all green |
 
-# Download the CI-built dependency index
-mvn test-order:download
-
-# Run tests — affected tests run first
-mvn test
-
-# See the current test ranking
-mvn test-order:show
-```
+**Key takeaway:** PR #6's bug was caught by the affected step alone — `ShippingCalculatorTest` failed
+because it transitively depends on `Money.multiply()`. The remaining 6 tests never ran.
 
 ## CI Workflow
 
-Two steps on every PR:
+Two steps on every PR, one learn run on every main push:
 
 ```yaml
-- name: Run affected tests
-  run: |
-    mvn test-order:affected test \
-      -Dtestorder.changeMode=since-last-commit
+      # On main: build the dependency index
+      - name: "Learn: full instrumented run"
+        if: github.ref == 'refs/heads/main'
+        run: mvn test -Dtestorder.mode=learn
 
-- name: Run remaining tests (if affected passed)
-  run: mvn test-order:run-remaining test
+      # On PRs: affected first, then the rest
+      - name: Run affected tests
+        if: github.ref != 'refs/heads/main'
+        run: |
+          mvn test-order:affected test \
+            -Dtestorder.changeMode=since-last-commit
+
+      - name: Run remaining tests (if affected passed)
+        if: github.ref != 'refs/heads/main'
+        run: mvn test-order:run-remaining test
 ```
 
-The index is built on main pushes and cached — PRs restore it automatically.
 See [`.github/workflows/ci.yml`](.github/workflows/ci.yml) for the full workflow.
+[`.github/workflows/ci-tiered.yml`](.github/workflows/ci-tiered.yml) shows the same pattern as a named reference.
 
 ## Architecture
 
@@ -65,13 +67,12 @@ me.bechberger.shop
 ## How test-order selects affected tests
 
 `test-order` records which test classes loaded which production classes during a learn run on main.
-When a PR changes `Money.java`, the affected step automatically runs `MoneyTest`,
-`PricingEngineTest`, `ShippingCalculatorTest`, `OrderProcessorTest`, and any other
-test that transitively depends on `Money` — without any configuration.
+When a PR changes `Money.java`, the affected step automatically runs every test that
+transitively depends on `Money` — no configuration needed.
 
 ```
 Change Money.java
   → Affected: MoneyTest, PricingEngineTest, ShippingCalculatorTest,
-              OrderProcessorTest, MoneyFormatterTest, NotificationServiceTest, OrderItemTest
-  → Remaining: AddressTest, CustomerTest, ProductCatalogTest, ...
+              OrderProcessorTest, MoneyFormatterTest, NotificationServiceTest, OrderItemTest, ...
+  → Remaining: AddressTest, CustomerTest, StringSanitizerTest, ...
 ```
